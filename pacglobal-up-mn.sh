@@ -13,7 +13,7 @@ if [ "$binary_url" = "" ] || [ "$file_name" = "" ]; then
 	exit
 fi
 echo ""
-echo "#############################################################ä"
+echo "#############################################################Ã¤"
 echo "#   Welcome to the upgrade script for PACGlobal masternodes  #"
 echo "##############################################################"
 echo ""
@@ -36,10 +36,24 @@ echo "#  Updating the operating system  #"
 echo "###################################"
 echo ""
 sleep 3
-
 sudo apt-get -y update
 sudo apt-get -y upgrade
-
+echo ""
+echo "#################################"
+echo "#      Installing sentinel      #"
+echo "#################################"
+echo ""
+cd ~
+set +e
+apt-get -y install python python-virtualenv 
+apt-get -y install virtualenv git
+git clone https://github.com/PACGlobalOfficial/sentinel.git 
+set -e
+cd sentinel
+virtualenv ./venv
+./venv/bin/pip install -r requirements.txt
+cat /etc/crontab | grep -v "* * * * * root cd ~/sentinel && ./venv/bin/python bin/sentinel.py >/dev/null 2>&1" > /etc/crontab2 && mv /etc/crontab2 /etc/crontab
+echo "* * * * * root cd ~/sentinel && ./venv/bin/python bin/sentinel.py >/dev/null 2>&1" >> /etc/crontab
 echo ""
 echo "Stopping the pacg service"
 set +e
@@ -48,7 +62,6 @@ set -e
 systemctl stop pacg.service || true
 echo "The pacg service stopped"
 sleep 3
-
 echo ""
 echo "#########################################"
 echo "#      Getting/Setting binaries up     #"
@@ -111,5 +124,3 @@ echo "~/PACGlobal/pacglobal-cli getblockcount"
 echo "~/PACGlobal/pacglobal-cli masternode status"
 echo "~/PACGlobal/pacglobal-cli mnsync status"
 echo ""
-
-
