@@ -30,7 +30,8 @@ echo "Running this script as root on Ubuntu 18.04 LTS or newer is highly recomme
 echo "Please note that this script will try to configure 6 GB of swap - the combined value of memory and swap should be at least 7 GB. Use the command 'free -h' to check the values (under 'Total')." 
 echo ""
 sleep 10
-ipaddr="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+#ipaddr="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+ipaddr="$(wget -qO- ifconfig.me)"
 while [[ $ipaddr = '' ]] || [[ $ipaddr = ' ' ]]; do
 	read -p 'Unable to find an external IP, please provide one: ' ipaddr
 	sleep 2
@@ -160,7 +161,7 @@ echo "server=1" >> pacglobal.conf
 echo "daemon=1" >> pacglobal.conf
 echo "maxconnections=64" >> pacglobal.conf
 echo "#----" >> pacglobal.conf
-echo "masternode=1" >> pacglobal.conf
+#echo "masternode=1" >> pacglobal.conf
 echo "masternodeblsprivkey=$mnkey" >> pacglobal.conf
 echo "externalip=$ipaddr" >> pacglobal.conf
 echo "#----" >> pacglobal.conf
@@ -198,6 +199,24 @@ echo "pacg.service enabled"
 #start the service
 systemctl start pacg.service
 echo "pacg.service started"
+echo ""
+echo "#################################"
+echo "#      Installing sentinel      #"
+echo "#################################"
+echo ""
+cd ~
+set +e
+#install python if missing, install pyhton 2.x virtualenv
+apt-get -y install python python-virtualenv 
+#install python3 virtualenv, if this version of python is used
+apt-get -y install virtualenv git
+git clone https://github.com/PACGlobalOfficial/sentinel.git
+set -e
+cd sentinel
+virtualenv ./venv
+./venv/bin/pip install -r requirements.txt
+cat /etc/crontab | grep -v "* * * * * root cd ~/sentinel && ./venv/bin/python bin/sentinel.py >/dev/null 2>&1" > /etc/crontab2 && mv /etc/crontab2 /etc/crontab
+echo "* * * * * root cd ~/sentinel && ./venv/bin/python bin/sentinel.py >/dev/null 2>&1" >> /etc/crontab
 echo ""
 echo "###############################"
 echo "#      Running the wallet     #"
